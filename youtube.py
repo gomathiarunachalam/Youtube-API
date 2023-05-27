@@ -19,7 +19,7 @@ import numpy as np
 import streamlit as st
 
 
-
+# Streamlit app
 # Comfiguring Streamlit GUI
 st.set_page_config(page_title="YouTube Data",layout='wide')
 
@@ -181,7 +181,7 @@ with col1:
             return response
 
 
-        # Define a function to convert duration
+        # Define a function to convert duration using RE(Regular Expression)
         def convert_duration(duration):
             regex = r'PT(\d+H)?(\d+M)?(\d+S)?'
             match = re.match(regex, duration)
