@@ -1,7 +1,7 @@
-#pip install --upgrade google-api-python-client
+ #[YouTube API library]
 from googleapiclient.discovery import build
-# [File handling libraries]
-import json
+
+# [File handling library]
 import re
 
 # [MongoDB]
@@ -10,33 +10,37 @@ import pymongo
 # [SQL libraries]
 import mysql.connector
 import sqlalchemy
+from googleapiclient.errors import HttpError
 from sqlalchemy import create_engine
 import pymysql
 
-# [pandas, numpy]
+# [pandas]
 import pandas as pd
-import numpy as np
 
-# [Streamlit libraries]
+# [Dash board library]
 import streamlit as st
+import plotly.express as px
 
+# ==============================================         /   /   DASHBOARD   /   /         ================================================== #
 
-# Streamlit app
-# Comfiguring Streamlit GUI
-st.set_page_config(page_title="YouTube Data",layout='wide')
+# Configuring Streamlit GUI
+st.set_page_config(layout='wide')
 
 # Title
-st.title('_:green[YouTube Data API]_')
+st.title('_:red[YouTube Data Harvesting and Warehousing]_')
 
-
+# ========================================   /     Data collection zone and Stored data to MongoDB    /   =================================== #
 
 # Data collection zone
 col1, col2 = st.columns(2)
 with col1:
-    st.header(':red[YouTube Data Harvesting]')
-    channel_id = st.text_input(':blue[Enter the channel_id]')
-    st.write(''':orange[click below button to get your data into MongoDB]''')
-    Get_data = st.button(':green[Get Channel data in MongoDB]')
+    st.header('_:red[YouTube Data Harvesting]_')
+    st.write("1.UCFDNs1VFta0yZUVKGZK5gcg, # AI Tamil")
+    st.write("2.UCNU_lfiiWBdtULKOw6X0Dig, # Krish naik")
+    channel_id = st.text_input('*Enter channel_id*')
+    st.write('''click below button to store your data into MongoDB database.''')
+    Get_data = st.button('*MongoDB*')
+
 
     # Define Session state to Get data button
     if "Get_state" not in st.session_state:
@@ -44,11 +48,15 @@ with col1:
     if Get_data or st.session_state.Get_state:
         st.session_state.Get_state = True
 
-        # Access youtube API
+        # Access YouTube API
         api_service_name = 'youtube'
         api_version = 'v3'
-        api_key = "AIzaSyBlfHIvprY7fAFlaAAGUvUW9QA8W6A4-Lo"
+        api_key = 'AIzaSyB6CHONsDJcH3rTkORrlW-ZXsZaDu_V0tM'
         youtube = build(api_service_name, api_version, developerKey=api_key)
+        youtube = build(api_service_name, api_version, developerKey=api_key)
+
+
+        # -------------------------------------------------------------------------------------------- #
 
         # Define a function to retrieve channel data
         def get_channel_data(youtube, channel_id):
@@ -61,7 +69,7 @@ with col1:
 
                     if 'items' not in channel_response:
                         st.write(f"Invalid channel id: {channel_id}")
-                        st.error("Enter the correct 11-digit **channel_id**")
+                        st.error("Enter the correct 11-digit *channel_id*")
                         return None
 
                     return channel_response
@@ -73,7 +81,7 @@ with col1:
                     st.write('An error occurred: %s' % e)
                     return None
             except:
-                st.write('You have exceeded your YouTube API quota')
+                st.write('You have exceeded your YouTube API quota. Please try again tomorrow.')
 
 
         # Function call to Get Channel data from a single channel ID
@@ -130,7 +138,7 @@ with col1:
             return video_id
 
 
-        # Function call to Get  video_ids using channel playlist Id
+        # Function call to Get  video_ids using channel playlist ID
         video_ids = get_video_ids(youtube, channel_playlist_id)
 
 
@@ -165,7 +173,7 @@ with col1:
                     video_data.append(video)
 
                 except:
-                    st.write('You have exceeded your YouTube API quota')
+                    st.write('You have exceeded your YouTube API quota.Try again later.')
 
             return video_data
 
@@ -183,7 +191,7 @@ with col1:
             return response
 
 
-        # Define a function to convert duration using RE(Regular Expression)
+        # Define a function to convert duration
         def convert_duration(duration):
             regex = r'PT(\d+H)?(\d+M)?(\d+S)?'
             match = re.match(regex, duration)
@@ -282,16 +290,15 @@ with col1:
 
         # print the result of the insertion operation
         st.write(f"Updated document id: {upload.upserted_id if upload.upserted_id else upload.modified_count}")
-
+        st.write('YouTube data got stored successfully in MongoDB database.')
         # Close the connection
         client.close()
 
 # ========================================   /     Data Migrate zone (Stored data to MySQL)    /   ========================================== #
 
 with col2:
-    st.header(':red[Data Migration]')
-    st.write(''':orange[Choose channel name which to migrate from MongoDB to MySQL Database]''')
-
+    st.header('_:red[Data Migration]_')
+    st.write('''Choose the channel name which you want to migrate from MongoDB to MySQL Database.''')
 
     # Connect to the MongoDB server
     client = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -306,9 +313,9 @@ with col2:
     document_names = []
     for document in collection.find():
         document_names.append(document["Channel_Name"])
-    document_name = st.selectbox(':blue[Select Channel name]', options=document_names, key='document_names')
-    st.write(':orange[click below to Migrate to MySQL]')
-    Migrate = st.button(':green[Migrate to MySQL]')
+    document_name = st.selectbox('*Select Channel name*', options=document_names, key='document_names')
+    #st.write('''click 'Migrate to MySQL'.''')
+    Migrate = st.button('*Migrate to MySQL*')
 
     # Define Session state to Migrate to MySQL button
     if 'migrate_sql' not in st.session_state:
@@ -355,7 +362,9 @@ with col2:
                 'Favorite_Count': result['Channel_data'][f"Video_Id_{i}"]['Favorite_Count'],
                 'Comment_Count': result['Channel_data'][f"Video_Id_{i}"]['Comment_Count'],
                 'Duration': result['Channel_data'][f"Video_Id_{i}"]['Duration'],
-                'Thumbnail': result['Channel_data'][f"Video_Id_{i}"]['Thumbnail'],
+                'Thumbnail': result['Channel_data']
+
+                [f"Video_Id_{i}"]['Thumbnail'],
                 'Caption_Status': result['Channel_data'][f"Video_Id_{i}"]['Caption_Status']
             }
             video_details_list.append(video_details_tosql)
@@ -394,13 +403,12 @@ with col2:
         Comments_df = pd.DataFrame(Comment_details_list)
 
         # -------------------- Data Migrate to MySQL --------------- #
-
         # Connect to the MySQL server
         connect = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="root",
-            auth_plugin="mysql_native_password")
+            password="root")  # ,
+        # auth_plugin="mysql_native_password")
 
         # Create a new database and use
         mycursor = connect.cursor()
@@ -454,144 +462,122 @@ with col2:
                                   'Comment_Author': sqlalchemy.types.VARCHAR(length=225),
                                   'Comment_Published_date': sqlalchemy.types.String(length=50), })
 
-st.sidebar.header(':red[Query section]')
+    # ====================================================   /     Channel Analysis zone     /   ================================================= #
 
-# Selectbox creation
-question_tosql = st.sidebar.selectbox(':blue[Select your Question]',
-                              ('1. What are the names of all the videos and their corresponding channels?',
-                               '2. Which channels have the most number of videos, and how many videos do they have?',
-                               '3. What are the top 10 most viewed videos and their respective channels?',
-                               '4. How many comments were made on each video, and what are their corresponding video names?',
-                               '5. Which videos have the highest number of likes, and what are their corresponding channel names?',
-                               '6. What is the total number of likes and dislikes for each video, and what are their corresponding video names?',
-                               '7. What is the total number of views for each channel, and what are their corresponding channel names?',
-                               '8. What are the names of all the channels that have published videos in the year 2022?',
-                               '9. What is the average duration of all videos in each channel, and what are their corresponding channel names?',
-                               '10. Which videos have the highest number of comments, and what are their corresponding channel names?'),
-                              key='collection_question')
+    # st.header(':violet[Channel Data Analysis zone]')
+    # st.write(
+    #      '''(Note:- This zone *Analysis of a collection of channel data* depends on your question selection and gives a table format output.)''')
+    #
+    # # Check available channel data
+    # Check_channel = st.checkbox('*Check available channel data for analysis*')
+    #
+    # if Check_channel:
+    #     # Create database connection
+    #     engine = create_engine('mysql+mysqlconnector://root:password@localhost/youtube_db', echo=False)
+    #     # Execute SQL query to retrieve channel names
+    #     query = "SELECT Channel_Name FROM channel;"
+    #     results = pd.read_sql(query, engine)
+    #     # Get channel names as a list
+    #     channel_names_from_sql = list(results['Channel_Name'])
+    #     # Create a DataFrame from the list and reset the index to start from 1
+    #     df_at_sql = pd.DataFrame(channel_names_from_sql, columns=['Available channel data']).reset_index(drop=True)
+    #     # Reset index to start from 1 instead of 0
+    #     df_at_sql.index += 1
+    #     # Show dataframe
+    #     st.dataframe(df_at_sql)
 
-# Creat a connection to SQL
-connect_for_question = pymysql.connect(host='localhost', user='root', password='root', db='youtube_db')
-cursor = connect_for_question.cursor()
+    # -----------------------------------------------------     /   Questions   /    ------------------------------------------------------------- #
+    st.subheader(':red[Channel Data Analysis zone]')
 
-# Q1
-if question_tosql == '1. What are the names of all the videos and their corresponding channels?':
-    cursor.execute(
-        "SELECT channel.Channel_Name, video.Video_Name FROM channel JOIN playlist JOIN video ON channel.Channel_Id = playlist.Channel_Id AND playlist.Playlist_Id = video.Playlist_Id;")
-    result_1 = cursor.fetchall()
-    df1 = pd.DataFrame(result_1, columns=['Channel Name', 'Video Name']).reset_index(drop=True)
-    df1.index += 1
-    st.dataframe(df1)
+    # Selectbox creation
+    question_tosql = st.selectbox('*Select your Question*',
+                                  ('1. What are the names of all the videos and their corresponding channels?',
+                                   '2. Which channels have the most number of videos, and how many videos do they have?',
+                                   '3. What are the top 10 most viewed videos and their respective channels?',
+                                   '4. How many comments were made on each video, and what are their corresponding video names?',
+                                   '5. Which videos have the highest number of likes, and what are their corresponding channel names?',
+                                   '6. What is the total number of likes and dislikes for each video, and what are their corresponding video names?',
+                                   '7. What is the total number of views for each channel, and what are their corresponding channel names?',
+                                   '8. What are the names of all the channels that have published videos in the year 2022?',
+                                   '9. What is the average duration of all videos in each channel, and what are their corresponding channel names?',
+                                   '10. Which videos have the highest number of comments, and what are their corresponding channel names?'),
+                                  key='collection_question')
 
-# Q2
-elif question_tosql == '2. Which channels have the most number of videos, and how many videos do they have?':
+    # Create a connection to SQL
+    connect_for_question = mysql.connector.connect(host='localhost', user='root', password='root', db='youtube_db')
+    cursor = connect_for_question.cursor()
 
-    col1, col2 = st.columns(2)
-    with col1:
-        cursor.execute("SELECT Channel_Name, Video_Count FROM channel ORDER BY Video_Count DESC;")
-        result_2 = cursor.fetchall()
-        df2 = pd.DataFrame(result_2, columns=['Channel Name', 'Video Count']).reset_index(drop=True)
-        df2.index += 1
-        st.dataframe(df2)
-
-    with col2:
-        fig_vc = px.bar(df2, y='Video Count', x='Channel Name', text_auto='.2s', title="Most number of videos", )
-        fig_vc.update_traces(textfont_size=16, marker_color='#E6064A')
-        fig_vc.update_layout(title_font_color='#1308C2 ', title_font=dict(size=25))
-        st.plotly_chart(fig_vc, use_container_width=True)
-
-# Q3
-elif question_tosql == '3. What are the top 10 most viewed videos and their respective channels?':
-
-    col1, col2 = st.columns(2)
-    with col1:
+    # Q1
+    if question_tosql == '1. What are the names of all the videos and their corresponding channels?':
         cursor.execute(
-            "SELECT channel.Channel_Name, video.Video_Name, video.View_Count FROM channel JOIN playlist ON channel.Channel_Id = playlist.Channel_Id JOIN video ON playlist.Playlist_Id = video.Playlist_Id ORDER BY video.View_Count DESC LIMIT 10;")
-        result_3 = cursor.fetchall()
-        df3 = pd.DataFrame(result_3, columns=['Channel Name', 'Video Name', 'View count']).reset_index(drop=True)
-        df3.index += 1
-        st.dataframe(df3)
+            "SELECT distinct Channel_Name, Video_Name FROM channel,video where channel.Playlist_Id = video.Playlist_Id")
+        df = pd.DataFrame(cursor.fetchall(), columns=['Channel Name', 'Video Name'])
+        st.dataframe(df)
 
-    with col2:
-        fig_topvc = px.bar(df3, y='View count', x='Video Name', text_auto='.2s', title="Top 10 most viewed videos")
-        fig_topvc.update_traces(textfont_size=16, marker_color='#E6064A')
-        fig_topvc.update_layout(title_font_color='#1308C2 ', title_font=dict(size=25))
-        st.plotly_chart(fig_topvc, use_container_width=True)
+    # Q2
+    elif question_tosql == '2. Which channels have the most number of videos, and how many videos do they have?':
+        cursor.execute("SELECT distinct Channel_Name, Video_Count FROM channel ORDER BY Video_Count DESC;")
+        df = pd.DataFrame(cursor.fetchall(), columns=['Channel Name', 'Video Count'])
+        st.dataframe(df)
 
-# Q4
-elif question_tosql == '4. How many comments were made on each video, and what are their corresponding video names?':
-    cursor.execute(
-        "SELECT channel.Channel_Name, video.Video_Name, video.Comment_Count FROM channel JOIN playlist ON channel.Channel_Id = playlist.Channel_Id JOIN video ON playlist.Playlist_Id = video.Playlist_Id;")
-    result_4 = cursor.fetchall()
-    df4 = pd.DataFrame(result_4, columns=['Channel Name', 'Video Name', 'Comment count']).reset_index(drop=True)
-    df4.index += 1
-    st.dataframe(df4)
+    # Q3
+    elif question_tosql == '3. What are the top 10 most viewed videos and their respective channels?':
+        cursor.execute(
+            "SELECT distinct Channel_Name, Video_Name, View_Count FROM channel, video where channel.Playlist_Id = video.Playlist_Id ORDER BY View_Count DESC LIMIT 10;")
+        df = pd.DataFrame(cursor.fetchall(), columns=['Channel Name', 'Video Name', 'View count'])
+        st.dataframe(df)
 
-# Q5
-elif question_tosql == '5. Which videos have the highest number of likes, and what are their corresponding channel names?':
-    cursor.execute(
-        "SELECT channel.Channel_Name, video.Video_Name, video.Like_Count FROM channel JOIN playlist ON channel.Channel_Id = playlist.Channel_Id JOIN video ON playlist.Playlist_Id = video.Playlist_Id ORDER BY video.Like_Count DESC;")
-    result_5 = cursor.fetchall()
-    df5 = pd.DataFrame(result_5, columns=['Channel Name', 'Video Name', 'Like count']).reset_index(drop=True)
-    df5.index += 1
-    st.dataframe(df5)
+    # Q4
+    elif question_tosql == '4. How many comments were made on each video, and what are their corresponding video names?':
+        cursor.execute("SELECT distinct Video_Name, Comment_Count FROM video;")
+        df = pd.DataFrame(cursor.fetchall(), columns=['Video Name', 'Comment count'])
+        st.dataframe(df)
 
-# Q6
-elif question_tosql == '6. What is the total number of likes and dislikes for each video, and what are their corresponding video names?':
-    st.write('**Note:- In November 2021, YouTube removed the public dislike count from all of its videos.**')
-    cursor.execute(
-        "SELECT channel.Channel_Name, video.Video_Name, video.Like_Count, video.Dislike_Count FROM channel JOIN playlist ON channel.Channel_Id = playlist.Channel_Id JOIN video ON playlist.Playlist_Id = video.Playlist_Id ORDER BY video.Like_Count DESC;")
-    result_6 = cursor.fetchall()
-    df6 = pd.DataFrame(result_6, columns=['Channel Name', 'Video Name', 'Like count', 'Dislike count']).reset_index(
-        drop=True)
-    df6.index += 1
-    st.dataframe(df6)
+    # Q5
+    elif question_tosql == '5. Which videos have the highest number of likes, and what are their corresponding channel names?':
+        cursor.execute(
+            "SELECT distinct Channel_Name, Video_Name, Like_Count FROM channel, video where channel.Playlist_Id = video.Playlist_Id ORDER BY Like_Count DESC;")
+        df = pd.DataFrame(cursor.fetchall(), columns=['Channel Name', 'Video Name', 'Like count'])
+        st.dataframe(df)
 
-# Q7
-elif question_tosql == '7. What is the total number of views for each channel, and what are their corresponding channel names?':
+    # Q6
+    elif question_tosql == '6. What is the total number of likes and dislikes for each video, and what are their corresponding video names?':
+        st.write('*Note:- In November 2021, YouTube removed the public dislike count from all of its videos.*')
+        cursor.execute(
+            "SELECT distinct Channel_Name, Video_Name, Like_Count, Dislike_Count FROM channel , video where channel.Playlist_Id = video.Playlist_Id ORDER BY Like_Count DESC;")
+        df = pd.DataFrame(cursor.fetchall(), columns=['Channel Name', 'Video Name', 'Like count', 'Dislike count'])
+        st.dataframe(df)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        cursor.execute("SELECT Channel_Name, Channel_Views FROM channel ORDER BY Channel_Views DESC;")
-        result_7 = cursor.fetchall()
-        df7 = pd.DataFrame(result_7, columns=['Channel Name', 'Total number of views']).reset_index(drop=True)
-        df7.index += 1
-        st.dataframe(df7)
+    # Q7
+    elif question_tosql == '7. What is the total number of views for each channel, and what are their corresponding channel names?':
+        cursor.execute("SELECT distinct Channel_Name, Channel_Views FROM channel ORDER BY Channel_Views DESC;")
+        df = pd.DataFrame(cursor.fetchall(), columns=['Channel Name', 'Total number of views'])
+        st.dataframe(df)
 
-    with col2:
-        fig_topview = px.bar(df7, y='Total number of views', x='Channel Name', text_auto='.2s',
-                             title="Total number of views", )
-        fig_topview.update_traces(textfont_size=16, marker_color='#E6064A')
-        fig_topview.update_layout(title_font_color='#1308C2 ', title_font=dict(size=25))
-        st.plotly_chart(fig_topview, use_container_width=True)
+    # Q8
+    elif question_tosql == '8. What are the names of all the channels that have published videos in the year 2022?':
+        cursor.execute(
+            "SELECT distinct Channel_Name, Video_Name, Published_date FROM channel, video where channel.Playlist_Id = video.Playlist_Id  AND EXTRACT(YEAR FROM Published_date) = 2022;")
+        result_8 = cursor.fetchall()
+        df8 = pd.DataFrame(result_8, columns=['Channel Name', 'Video Name', 'Year 2022 only']).reset_index(drop=True)
+        df8.index += 1
+        st.dataframe(df8)
 
-# Q8
-elif question_tosql == '8. What are the names of all the channels that have published videos in the year 2022?':
-    cursor.execute(
-        "SELECT channel.Channel_Name, video.Video_Name, video.Published_date FROM channel JOIN playlist ON channel.Channel_Id = playlist.Channel_Id JOIN video ON playlist.Playlist_Id = video.Playlist_Id  WHERE EXTRACT(YEAR FROM Published_date) = 2022;")
-    result_8 = cursor.fetchall()
-    df8 = pd.DataFrame(result_8, columns=['Channel Name', 'Video Name', 'Year 2022 only']).reset_index(drop=True)
-    df8.index += 1
-    st.dataframe(df8)
+    # Q9
+    elif question_tosql == '9. What is the average duration of all videos in each channel, and what are their corresponding channel names?':
+        cursor.execute(
+            "SELECT distinct Channel_Name, TIME_FORMAT(SEC_TO_TIME(AVG(TIME_TO_SEC(TIME(Duration)))), '%H:%i:%s') AS duration  FROM channel, video where channel.Playlist_Id = video.Playlist_Id GROUP by Channel_Name ORDER BY duration DESC ;")
+        df = pd.DataFrame(cursor.fetchall(), columns=['Channel Name', 'Average duration of videos (HH:MM:SS)'])
+        st.dataframe(df)
 
-# Q9
-elif question_tosql == '9. What is the average duration of all videos in each channel, and what are their corresponding channel names?':
-    cursor.execute(
-        "SELECT channel.Channel_Name, TIME_FORMAT(SEC_TO_TIME(AVG(TIME_TO_SEC(TIME(video.Duration)))), '%H:%i:%s') AS duration  FROM channel JOIN playlist ON channel.Channel_Id = playlist.Channel_Id JOIN video ON playlist.Playlist_Id = video.Playlist_Id GROUP by Channel_Name ORDER BY duration DESC ;")
-    result_9 = cursor.fetchall()
-    df9 = pd.DataFrame(result_9, columns=['Channel Name', 'Average duration of videos (HH:MM:SS)']).reset_index(
-        drop=True)
-    df9.index += 1
-    st.dataframe(df9)
+    # Q10
+    elif question_tosql == '10. Which videos have the highest number of comments, and what are their corresponding channel names?':
+        cursor.execute(
+            "SELECT distinct Channel_Name, Video_Name, Comment_Count FROM channel, video where channel.Playlist_Id = video.Playlist_Id ORDER BY Comment_Count DESC;")
+        df = pd.DataFrame(cursor.fetchall(), columns=['Channel Name', 'Video Name', 'Number of comments'])
+        st.dataframe(df)
 
-# Q10
-elif question_tosql == '10. Which videos have the highest number of comments, and what are their corresponding channel names?':
-    cursor.execute(
-        "SELECT channel.Channel_Name, video.Video_Name, video.Comment_Count FROM channel JOIN playlist ON channel.Channel_Id = playlist.Channel_Id JOIN video ON playlist.Playlist_Id = video.Playlist_Id ORDER BY video.Comment_Count DESC;")
-    result_10 = cursor.fetchall()
-    df10 = pd.DataFrame(result_10, columns=['Channel Name', 'Video Name', 'Number of comments']).reset_index(drop=True)
-    df10.index += 1
-    st.dataframe(df10)
+    # SQL DB connection close
+    connect_for_question.close()
 
-# SQL DB connection close
-connect_for_question.close()
+    # ===============================================   /   COMPLETED   /   ====================================
